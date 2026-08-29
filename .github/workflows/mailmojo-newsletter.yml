@@ -12,6 +12,7 @@ on:
           - test
           - create-draft
           - explore-api
+          - explore-api2
       subject:
         description: "Emnelinje (kun for create-draft)"
         required: false
@@ -60,3 +61,7 @@ jobs:
         with:
           name: mailmojo-openapi
           path: mailmojo_openapi.json
+
+      - name: Utforsk API runde 2 (automasjon-skjema + eksisterende nyhetsbrev)
+        if: inputs.mode == 'explore-api2'
+        run: python explore_api2.py
