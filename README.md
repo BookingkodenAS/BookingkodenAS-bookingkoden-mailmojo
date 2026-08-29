@@ -102,11 +102,43 @@ sperren, så koden kjøres derfra i stedet:
 3. Sjekk resultatet i https://v3.mailmojo.no/campaigns/ – utkastet må fortsatt godkjennes
    og sendes manuelt av Geir.
 
+## Viktig – Mailmojo krever mer enn bare avsnitt i HTML-en
+
+`create_newsletter_draft()` pakker automatisk inn HTML-fragmenter (ren `<p>`-tekst) i et
+komplett `<html>`-dokument, og legger til en `<mm:unsubscribe>`-tag hvis den mangler.
+Uten disse avviser Mailmojo kallet med 400:
+
+- `"The HTML content is missing a complete <html> element"`
+- `"The HTML content is missing an <mm:unsubscribe> element"`
+
+Du trenger derfor ikke tenke på dette selv når du skriver nytt innhold – bare send ren
+avsnitts-HTML (`<p>...</p>`), så gjør klienten resten.
+
+## Bok-kapittel-serien (Velkomstserie - 5 tips)
+
+`newsletter-content/` inneholder HTML for alle 12 kapitlene i Geirs bokmanus "Usynlig for
+de riktige kundene" (hentet fra Google Drive-dokumentet "Bokmanus"), generert av
+`create_chapter_series.py`. Kjør via **Actions > Mailmojo nyhetsbrev > Run workflow**,
+`mode: create-chapter-series` – oppretter ett nyhetsbrev-KLADD per kapittel med emnet
+`"<nr>. <kapitteltittel>"`.
+
+Kjørt og bekreftet 2026-08-29: alle 12 kladdene ble opprettet (newsletter_id 563128–563139),
+se https://v3.mailmojo.no/campaigns/.
+
+**Manuelt gjenstående steg (API-et støtter det ikke):** Mailmojos API har ingen måte å
+legge disse inn som steg i en automasjon/velkomstserie – automasjons-endepunktet
+(`/v1/automations/{id}/`) støtter kun å lese/endre navn, avsender og RSS-feed-innstillinger,
+ikke å opprette eller redigere enkeltsteg, og krever i tillegg et `automations`-scope som
+denne API-klienten ikke har (Mailmojo avviser scopet direkte ved token-henting). Geir må
+derfor selv åpne hvert av de 12 utkastene i https://v3.mailmojo.no/campaigns/ og kopiere
+innholdet inn som steg i automasjonen "Velkomstserie - 5 tips"
+(https://v3.mailmojo.no/automation/57996/) i riktig rekkefølge.
+
 ## Neste steg – koble inn i ukentlig rutine
 
-Når dette er bekreftet fungerende, er neste steg å koble kallet inn i den ukentlige
-Bookingkoden-rutinen (se scheduled task "bookingkoden-innhold-ukentlig" i Cowork), slik
-at nyhetsbrev-utkastet også legges rett inn i Mailmojo automatisk, samtidig som blogg og
-LinkedIn-utkast lages – fortsatt med Geir som siste godkjenner før noe sendes. Det kan
-gjøres ved at rutinen trigger denne workflowen (via `workflow_dispatch` fra GitHub API/CLI)
-med emne og HTML-innhold generert samme uke.
+Når nye kapitler/nyhetsbrev skal lages løpende, er neste steg å koble kallet inn i den
+ukentlige Bookingkoden-rutinen (se scheduled task "bookingkoden-innhold-ukentlig" i
+Cowork), slik at nyhetsbrev-utkastet også legges rett inn i Mailmojo automatisk, samtidig
+som blogg og LinkedIn-utkast lages – fortsatt med Geir som siste godkjenner før noe
+sendes. Det kan gjøres ved at rutinen trigger denne workflowen (via `workflow_dispatch`
+fra GitHub API/CLI) med emne og HTML-innhold generert samme uke.
