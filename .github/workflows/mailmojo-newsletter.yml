@@ -13,6 +13,7 @@ on:
           - create-draft
           - explore-api
           - explore-api2
+          - explore-api3
       subject:
         description: "Emnelinje (kun for create-draft)"
         required: false
@@ -65,3 +66,7 @@ jobs:
       - name: Utforsk API runde 2 (automasjon-skjema + eksisterende nyhetsbrev)
         if: inputs.mode == 'explore-api2'
         run: python explore_api2.py
+
+      - name: Utforsk API runde 3 (Velkomstserie - 5 tips, automation_id 57996)
+        if: inputs.mode == 'explore-api3'
+        run: python explore_api3.py
