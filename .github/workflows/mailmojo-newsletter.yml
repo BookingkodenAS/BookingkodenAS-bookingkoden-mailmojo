@@ -1,0 +1,50 @@
+name: Mailmojo nyhetsbrev
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "test (sjekk API-tilkobling) eller create-draft (opprett nyhetsbrev-kladd)"
+        required: true
+        default: "test"
+        type: choice
+        options:
+          - test
+          - create-draft
+      subject:
+        description: "Emnelinje (kun for create-draft)"
+        required: false
+      html_file:
+        description: "Sti til HTML-fil i repoet (kun for create-draft)"
+        required: false
+        default: "example_email.html"
+      list_id:
+        description: "Mailmojo liste-ID (kun for create-draft)"
+        required: false
+        default: "46067"
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      MAILMOJO_CLIENT_SECRET: ${{ secrets.MAILMOJO_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - name: Test API-tilkobling
+        if: inputs.mode == 'test'
+        run: python mailmojo_client.py test
+
+      - name: Opprett nyhetsbrev-kladd
+        if: inputs.mode == 'create-draft'
+        run: |
+          python create_weekly_newsletter.py \
+            --list-id "${{ inputs.list_id }}" \
+            --subject "${{ inputs.subject }}" \
+            --html-file "${{ inputs.html_file }}"
