@@ -111,6 +111,13 @@ class MailmojoClient:
         Hvis dette feiler med 400/422, skriv ut resp.text for å se nøyaktig
         hvilke felt Mailmojo faktisk forventer, og juster body under.
         """
+        if "mm:unsubscribe" not in html.lower():
+            html += (
+                '\n<p style="font-size:12px;color:#888;">'
+                "<mm:unsubscribe>Meld deg av dette nyhetsbrevet</mm:unsubscribe>"
+                "</p>"
+            )
+
         if "<html" not in html.lower():
             html = (
                 "<!doctype html><html><head><meta charset=\"utf-8\"></head>"
