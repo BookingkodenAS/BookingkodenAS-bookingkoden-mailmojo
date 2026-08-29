@@ -111,6 +111,12 @@ class MailmojoClient:
         Hvis dette feiler med 400/422, skriv ut resp.text for å se nøyaktig
         hvilke felt Mailmojo faktisk forventer, og juster body under.
         """
+        if "<html" not in html.lower():
+            html = (
+                "<!doctype html><html><head><meta charset=\"utf-8\"></head>"
+                f"<body>{html}</body></html>"
+            )
+
         body = {
             "list_id": list_id,
             "subject": subject,
