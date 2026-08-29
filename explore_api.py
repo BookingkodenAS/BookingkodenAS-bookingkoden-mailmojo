@@ -1,62 +1,44 @@
 """
-Engangs-diagnostikk: sjekker hvilke ekstra endepunkter Mailmojo-API-et
-faktisk eksponerer, spesielt rundt automasjoner/dryppserier/velkomstserier,
-siden api.mailmojo.no/v1/newsletters/ (kladder) er det eneste vi vet
-fungerer fra README. Skriver ut statuskode + kort utdrag av body for hver
-kandidat, og henter mailmojo.dev sin forside (blokkert fra Claude Code, men
-ikke fra GitHub Actions) for a se om det finnes en offentlig endepunktliste.
+Engangs-diagnostikk: henter Mailmojos Swagger/OpenAPI-spesifikasjon fra
+https://api.mailmojo.no/ (funnet ved a sjekke API-roten) og filtrerer ut
+alt relatert til automasjoner/dryppserier/velkomstserier, siden
+api.mailmojo.no/v1/newsletters/ (kladder) er det eneste vi vet fungerer
+fra README.
 """
 
+import json
 import requests
-from mailmojo_client import MailmojoClient, API_BASE
+from mailmojo_client import MailmojoClient
 
 client = MailmojoClient()
 headers = client._headers()
 
-candidates = [
-    "automations/",
-    "automation/",
-    "autoresponders/",
-    "autoresponder/",
-    "flows/",
-    "series/",
-    "drip-campaigns/",
-    "welcome-series/",
-    "sequences/",
-    "triggers/",
-    "campaigns/",
-]
+resp = requests.get("https://api.mailmojo.no/", headers=headers, timeout=30)
+print("status:", resp.status_code, "bytes:", len(resp.text))
 
-print("=== Kandidat-endepunkter under", API_BASE, "===")
-for path in candidates:
-    url = f"{API_BASE}/{path}"
-    try:
-        resp = requests.get(url, headers=headers, timeout=15)
-        body = resp.text[:300].replace("\n", " ")
-        print(f"{resp.status_code}  {url}\n    {body}")
-    except Exception as e:
-        print(f"ERROR  {url}  {e}")
+with open("mailmojo_openapi.json", "w") as f:
+    f.write(resp.text)
 
-print("\n=== Root av API-et ===")
-for url in [API_BASE + "/", API_BASE.rsplit('/v1', 1)[0] + "/"]:
-    try:
-        resp = requests.get(url, headers=headers, timeout=15)
-        print(f"{resp.status_code}  {url}\n    {resp.text[:500]}")
-    except Exception as e:
-        print(f"ERROR  {url}  {e}")
+spec = resp.json()
 
-print("\n=== mailmojo.dev (offentlig API-dok) ===")
-try:
-    resp = requests.get("https://mailmojo.dev/", timeout=15)
-    print(resp.status_code, len(resp.text), "bytes")
-    print(resp.text[:3000])
-except Exception as e:
-    print("ERROR mailmojo.dev", e)
+print("\ntop-level keys:", list(spec.keys()))
 
-try:
-    resp = requests.get("https://mailmojo.dev/openapi.json", timeout=15)
-    print("\nopenapi.json:", resp.status_code, len(resp.text), "bytes")
-    if resp.status_code == 200:
-        print(resp.text[:3000])
-except Exception as e:
-    print("ERROR openapi.json", e)
+paths = spec.get("paths", {})
+print(f"\n=== Alle {len(paths)} paths ===")
+for p in sorted(paths.keys()):
+    methods = list(paths[p].keys())
+    print(f"  {p}  [{', '.join(methods)}]")
+
+keywords = ["automat", "series", "sequence", "welcome", "trigger", "drip", "flow", "step", "journey"]
+print("\n=== Paths/definitions som matcher nokkelord:", keywords, "===")
+for p, methods in paths.items():
+    blob = json.dumps(methods).lower()
+    if any(k in p.lower() or k in blob for k in keywords):
+        print(f"\n--- {p} ---")
+        print(json.dumps(methods, indent=2)[:2000])
+
+definitions = spec.get("definitions", {})
+print(f"\n=== Definisjoner som matcher nokkelord (av {len(definitions)} totalt) ===")
+for name in sorted(definitions.keys()):
+    if any(k in name.lower() for k in keywords):
+        print(f"  {name}")

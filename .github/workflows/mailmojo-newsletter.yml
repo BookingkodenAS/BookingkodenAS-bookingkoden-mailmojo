@@ -53,3 +53,10 @@ jobs:
       - name: Utforsk API (automasjoner/serier)
         if: inputs.mode == 'explore-api'
         run: python explore_api.py
+
+      - name: Last opp full API-spesifikasjon
+        if: inputs.mode == 'explore-api'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mailmojo-openapi
+          path: mailmojo_openapi.json
