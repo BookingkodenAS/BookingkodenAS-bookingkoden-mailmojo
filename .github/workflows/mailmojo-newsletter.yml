@@ -11,6 +11,7 @@ on:
         options:
           - test
           - create-draft
+          - explore-api
       subject:
         description: "Emnelinje (kun for create-draft)"
         required: false
@@ -48,3 +49,7 @@ jobs:
             --list-id "${{ inputs.list_id }}" \
             --subject "${{ inputs.subject }}" \
             --html-file "${{ inputs.html_file }}"
+
+      - name: Utforsk API (automasjoner/serier)
+        if: inputs.mode == 'explore-api'
+        run: python explore_api.py
