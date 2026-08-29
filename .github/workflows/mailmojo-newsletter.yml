@@ -15,6 +15,7 @@ on:
           - explore-api2
           - explore-api3
           - explore-api4
+          - create-chapter-series
       subject:
         description: "Emnelinje (kun for create-draft)"
         required: false
@@ -75,3 +76,7 @@ jobs:
       - name: Utforsk API runde 4 (prov automations-scope)
         if: inputs.mode == 'explore-api4'
         run: python explore_api4.py
+
+      - name: Opprett alle kapittel-kladder (bok-serien)
+        if: inputs.mode == 'create-chapter-series'
+        run: python create_chapter_series.py
